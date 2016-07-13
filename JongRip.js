@@ -53,7 +53,7 @@ function main(){
   world.addObject(playerTwo);
   dumbLog("After added paddle")
 
-  update(context,world,ball);
+  update(context,world);
 }
 
 function World(){
@@ -66,7 +66,7 @@ World.prototype.addObject = function(object){
 
 World.prototype.update = function(){
 	this.objects.forEach(function(o){
-  	if(o.update === "function"){
+  	if(typeof o.update === "function"){
     	o.update();
     }
   });
@@ -140,15 +140,11 @@ PlayerPaddle.prototype.move = function(event) {
 
 function Ball(x, y, canvas, paddle1, paddle2){
   Rectangle.call(this, x, y, 12, 12);
-  this.xDir = 1;
-  this.yDir = 1;
+  this.xDir = 3;
+  this.yDir = 3;
   this.canvas = canvas;
   this.paddle1 = paddle1;
   this.paddle2 = paddle2;
-  requestAnimationFrame(function(){
-    this.move;
-  })
-
 }
 
 extend(Ball, Rectangle);
@@ -156,10 +152,40 @@ extend(Ball, Rectangle);
 Ball.prototype.move = function(){
   this.x = this.x + this.xDir;
   this.y = this.y + this.yDir;
+  console.log("ball moved", this.x, this.y, "xDir", this.xDir, "yDir", this.yDir);
+
+  //test collision with paddle 1 on left side of screen
+  if(this.xDir < 0){
+    if(this.top() >= this.paddle1.top() - 12  && this.bottom() <= this.paddle1.bottom() + 12
+      && this.left() === this.paddle1.right()){
+        this.xDir = this.xDir * -1;
+      }
+    }
+
+  //test collision with paddle 2 on right side of screen
+  if(this.xDir > 0){
+    if(this.top() >= this.paddle2.top() - 12 && this.bottom() <= this.paddle2.bottom() + 12
+      && this.right() === this.paddle2.left()){
+        this.xDir = this.xDir * -1;
+      }
+    }
+
+  //test collision with arena
+  if(this.right() >= 400 || this.left() <= 0){
+    this.xDir = this.xDir * -1;
+  }
+
+  if(this.top() <= 0 || this.bottom() >= 300){
+    this.yDir = this.yDir * -1;
+  }
+}
+
+Ball.prototype.update = function(){
+  this.move();
 }
 
 
-function update(context, world, ball){
+function update(context, world){
 		// just to convince ourselves something is happening, lets draw a rectangle
     // 0,0 is the top left corner
     context.fillStyle = "black";
@@ -167,10 +193,10 @@ function update(context, world, ball){
 
     world.update();
     world.draw(context);
-    ball.move();
+
     requestAnimationFrame(function(){
     	update(context, world);
-      ball.move();
+
     })
     //hint
 	}
